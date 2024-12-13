@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
+// working with the cart.html file
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -23,7 +24,7 @@
                 <li class="nav-item"><a class="nav-link" href="/shop">Shop</a></li>
                 <li class="nav-item"><a class="nav-link active" href="/cart">Cart</a></li>
                 <li class="nav-item">
-                    <form th:action="@{/logout}" method="post">
+                    <form action="/logout" method="post">
                         <button class="nav-link btn btn-link" type="submit">Logout</button>
                     </form>
                 </li>
@@ -32,69 +33,25 @@
     </div>
 </nav>
 
-<div class="container mt-5">
+<div class="container mt-5" id="cart-container">
     <h1>Your Cart</h1>
 
     <!-- Empty Cart Message -->
-    <div th:if="${#lists.isEmpty(cartItems)}" class="alert alert-info">
+    <div id="empty-cart-message" class="alert alert-info" style="display:none;">
         Your cart is empty. <a href="/shop">Continue shopping</a>
     </div>
 
-    <div th:if="${cartItems}">
-        <div th:each="item : ${cartItems}" class="cart-item">
-            <h5 th:text="${item.bouquet.name}"></h5>
-            <p>Quantity: <span th:text="${item.quantity}"></span></p>
-            <p>Price: $<span th:text="${item.bouquet.price}"></span></p>
-            <p>Subtotal: $<span th:text="${item.quantity * item.bouquet.price}"></span></p>
-        </div>
-        <h3>Total: $<span th:text="${total}"></span></h3>
-    </div>
-    <div th:if="${#lists.isEmpty(cartItems)}">
-        <p>Your cart is empty. <a href="/shop">Continue shopping</a></p>
-    </div>
-
-
     <!-- Cart Items -->
-    <div th:unless="${#lists.isEmpty(cartItems)}">
-        <div class="row">
-            <div th:each="item : ${cartItems}" class="col-md-12 mb-4">
-                <div class="card position-relative">
-                    <div class="row g-0">
-                        <div class="col-md-3">
-                            <img th:src="${item.bouquet.imageUrl}" class="card-img" th:alt="${item.bouquet.name}" />
-                        </div>
-                        <div class="col-md-9">
-                            <div class="card-body">
-                                <h5 class="card-title" th:text="${item.bouquet.name}">Bouquet Name</h5>
-                                <p class="card-text" th:text="${item.bouquet.description}">Bouquet description</p>
-                                <p class="card-text">Price:
-                                    <span class="text-success" th:text="${'$' + #numbers.formatDecimal(item.bouquet.price, 1, 2)}">$0.00</span>
-                                </p>
-                                <p class="card-text">Quantity:
-                                    <span th:text="${item.quantity}">1</span>
-                                </p>
-                                <form th:action="@{/cart/update}" method="post" class="d-flex align-items-center">
-                                    <input type="hidden" name="itemId" th:value="${item.id}" />
-                                    <input type="number" name="quantity" class="form-control w-25" th:value="${item.quantity}" min="1" />
-                                    <button type="submit" class="btn btn-primary ms-2">Update</button>
-                                </form>
-                                <form th:action="@{/cart/remove}" method="post" class="mt-2">
-                                    <input type="hidden" name="itemId" th:value="${item.id}" />
-                                    <button type="submit" class="btn btn-danger">Remove</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div id="cart-items" style="display:none;">
+        <!-- Cart items will be inserted here dynamically -->
+    </div>
 
-        <!-- Total and Checkout -->
-        <div class="row mt-4">
-            <div class="col-md-12 text-end">
-                <h3>Total: <span class="text-success" th:text="${'$' + #numbers.formatDecimal(total, 1, 2)}">$0.00</span></h3>
-                <a href="/payment" class="btn btn-primary mt-3">Proceed to Checkout</a>
-            </div>
+    <!-- Total and Checkout -->
+    <div id="cart-total" class="row mt-4" style="display:none;">
+        <div class="col-md-12 text-end">
+            <h3>Total: <span id="total-amount" class="text-success">$0.00</span></h3>
+            <a href="/checkout" class="btn btn-primary mt-3">Proceed to Checkout</a>
+
         </div>
     </div>
 </div>
@@ -106,14 +63,31 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const cartContainer = document.getElementById('cart-container'); // Add an ID to the cart container if not present
+    const cartContainer = document.getElementById('cart-container');
+    const emptyCartMessage = document.getElementById('empty-cart-message');
+    const cartItemsContainer = document.getElementById('cart-items');
+    const cartTotalContainer = document.getElementById('cart-total');
+    const totalAmount = document.getElementById('total-amount');
 
     async function fetchCartItems() {
         try {
-            const response = await fetch('http://localhost:8080/api/cart', {
+            console.log('Fetching cart data from localhost:8080/cart...');
+
+            // Retrieve the JWT token from localStorage
+            const token = localStorage.getItem('jwt_token');
+
+            // If no token, redirect to login or handle the error
+            if (!token) {
+                alert("You must be logged in to view the cart.");
+                window.location.href = "/login"; // Redirect to login page (update as needed)
+                return;
+            }
+
+            // Make the request with the token in the Authorization header
+            const response = await fetch('http://localhost:8080/cart', {
                 method: 'GET',
-                credentials: 'include', // Include cookies for session
                 headers: {
+                    'Authorization': `Bearer ${token}`, // Add JWT to the Authorization header
                     'Content-Type': 'application/json'
                 }
             });
@@ -123,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const cartData = await response.json();
+            console.log('Data received:', cartData); // Log full response for debugging
             displayCartItems(cartData);
         } catch (error) {
             console.error('Error fetching cart items:', error);
@@ -131,33 +106,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function displayCartItems(cartItems) {
-        if (cartItems.length === 0) {
-            cartContainer.innerHTML = '<p>Your cart is empty. <a href="/shop">Continue shopping</a></p>';
+        if (!cartItems || cartItems.length === 0) {
+            console.log('Cart is empty.');
+            emptyCartMessage.style.display = 'block';
+            cartItemsContainer.style.display = 'none';
+            cartTotalContainer.style.display = 'none';
             return;
         }
 
+        console.log('Displaying cart items...');
         let total = 0;
-        const itemsHtml = cartItems.map(item => {
-            const subtotal = item.quantity * item.bouquet.price;
-            total += subtotal;
-            return `
-                <div class="cart-item">
-                    <h5>${item.bouquet.name}</h5>
-                    <p>Quantity: ${item.quantity}</p>
-                    <p>Price: $${item.bouquet.price.toFixed(2)}</p>
-                    <p>Subtotal: $${subtotal.toFixed(2)}</p>
-                </div>
-            `;
-        }).join('');
 
-        cartContainer.innerHTML = `
-            ${itemsHtml}
-            <h3>Total: $${total.toFixed(2)}</h3>
+        const itemsHtml = cartItems.map(item => {
+            // Check if the necessary data exists for item (like bouquetName, etc.)
+            if (!item.bouquetName || !item.price || !item.quantity || !item.imageUrl) {
+                console.error('Bouquet is missing for item:', item);
+                return ''; // Skip this item if necessary data is missing
+            }
+
+            const subtotal = item.quantity * item.price;
+            total += subtotal;
+
+            return `
+            <div class="card mb-3">
+                <div class="row g-0">
+                    <div class="col-md-3">
+                        <img src="${item.imageUrl}" class="card-img" alt="${item.bouquetName}" />
+                    </div>
+                    <div class="col-md-9">
+                        <div class="card-body">
+                            <h5 class="card-title">${item.bouquetName}</h5>
+                            <p class="card-text">${item.description}</p>
+                            <p class="card-text">Price: <span class="text-success">$${item.price.toFixed(2)}</span></p>
+                            <p class="card-text">Quantity: ${item.quantity}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         `;
+        }).join(''); // Join items to prevent multiple divs
+
+        cartItemsContainer.innerHTML = itemsHtml;
+        totalAmount.textContent = `$${total.toFixed(2)}`;
+        cartItemsContainer.style.display = 'block';
+        cartTotalContainer.style.display = 'block';
+        emptyCartMessage.style.display = 'none';
     }
+
 
     fetchCartItems();
 });
 </script>
+
 </body>
+
 </html>

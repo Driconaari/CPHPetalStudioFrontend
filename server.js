@@ -1,5 +1,6 @@
 
 /*
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -12,36 +13,11 @@ app.use(cors({
     origin: 'http://localhost:5500' // Replace with your frontend's origin if needed
 }));
 
+// Serve static files from the 'assets' directory
+app.use('/assets', express.static('assets'));
+
 // Middleware to parse JSON request bodies
 app.use(express.json());
-
-// Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Route to serve 'home.html'
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'home.html'));
-});
-
-// Route to serve 'user-dashboard.html'
-app.get('/user-dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'user-dashboard.html'));
-});
-
-// Route to serve 'admin-dashboard.html'
-app.get('/admin-dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
-});
-
-// Route to serve 'view.html' for '/bouquets/view' path
-app.get('/bouquets/view', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'bouquets', 'view.html'));
-});
-
-// Route to serve 'list.html' for '/bouquets/list' path
-app.get('/bouquets/list', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'bouquets', 'list.html'));
-});
 
 // User data (in-memory for demo purposes)
 const users = [

@@ -16,7 +16,6 @@
     <p>Your trusted online flower shop</p>
 </header>
 
-
 <!-- Login Form Container -->
 <div class="container">
     <!-- Header Section -->
@@ -53,47 +52,60 @@
 <!-- JavaScript -->
 <script>
     function login() {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
 
-        fetch('http://localhost:8080/api/auth/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username, password }),
+    console.log('Attempting login with username:', username);
+
+    fetch('http://localhost:8080/api/auth/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+    })
+        .then(response => {
+            console.log('Login response status:', response.status);
+            if (!response.ok) {
+                throw new Error('Login failed');
+            }
+            return response.json();
         })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Login failed');
-                }
-                return response.json();
-            })
-            .then(data => {
-                const token = data.token;
-                const role = data.role; // User's role from the API response
+        .then(data => {
+            console.log('Login response data:', data);
+            const token = data.token;
+            const role = data.role; // User's role from the API response
 
+            if (token) {
+                console.log('JWT token received:', token);
                 // Store the token for future use
                 localStorage.setItem('jwt_token', token);
+                console.log('JWT token stored in localStorage:', localStorage.getItem('jwt_token'));
+            } else {
+                console.error('JWT token not received');
+            }
 
-                // Redirect to the correct dashboard based on the user's role
-                if (role === 'ROLE_ADMIN') {
-                    window.location.href = '/admin-dashboard.html';
-                } else if (role === 'ROLE_USER') {
-                    window.location.href = '/user-dashboard.html';
-                } else {
-                    document.getElementById('message').textContent = 'Unknown role!';
-                    document.getElementById('message').className = 'error';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('message').textContent = 'Login failed. Please check your credentials.';
+            // Redirect to the correct dashboard based on the user's role
+            if (role === 'ROLE_ADMIN') {
+                console.log('Redirecting to admin dashboard');
+                window.location.href = '/admin-dashboard.html';
+            } else if (role === 'ROLE_USER') {
+                console.log('Redirecting to user dashboard');
+                window.location.href = '/user-dashboard.html';
+            } else {
+                console.log('Unknown role:', role);
+                document.getElementById('message').textContent = 'Unknown role!';
                 document.getElementById('message').className = 'error';
-            });
-    }
-
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('message').textContent = 'Login failed. Please check your credentials.';
+            document.getElementById('message').className = 'error';
+        });
+}
     function goToDashboard() {
+        console.log('Navigating to dashboard');
         window.location.href = '/dashboard';
     }
 </script>

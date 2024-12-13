@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,8 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Playfair+Display:wght@400;700&display=swap"
           rel="stylesheet">
 </head>
-
 <body>
+
 <nav class="navbar navbar-expand-lg navbar-light">
     <div class="container">
         <a class="navbar-brand" href="#">CPH Petal Studio</a>
@@ -34,7 +33,6 @@
 
 <div class="container mt-5">
     <div class="row">
-        <!-- Sidebar for Filters -->
         <div class="col-lg-3">
             <div class="filter-section">
                 <h2>Filter Bouquets</h2>
@@ -50,14 +48,13 @@
             </div>
         </div>
 
-        <!-- Product Listing -->
         <div class="col-lg-9">
-            <div class="row" id="bouquet-list">
-                <!-- Dynamic content populated by JavaScript -->
-            </div>
+            <div class="row" id="bouquet-list"></div>
         </div>
     </div>
 </div>
+
+<div id="success-message" class="alert alert-success" style="display: none;">Item added to cart successfully!</div>
 
 <footer class="text-center mt-4">
     &copy; 2024 CPH Petal Studio. <a href="/privacy">Privacy Policy</a> | <a href="/terms">Terms of Service</a>
@@ -65,132 +62,139 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Fetch and display bouquets dynamically when the page loads completely
     document.addEventListener('DOMContentLoaded', function () {
-        // Fetch and display bouquets dynamically
-        fetch('http://localhost:8080/api/bouquets') // Replace with your backend URL
+        console.log('DOMContentLoaded event fired');
+
+        fetch('http://localhost:8080/api/bouquets')
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch bouquets: ' + response.statusText);
-                }
+                console.log('Fetch bouquets response:', response);
                 return response.json();
             })
             .then(data => {
+                console.log('Bouquets data:', data);
                 const bouquetList = document.getElementById('bouquet-list');
-                bouquetList.innerHTML = ''; // Clear the existing content
-
-                // Populate bouquet list
+                bouquetList.innerHTML = '';
                 data.forEach(bouquet => {
+                    console.log('Processing bouquet:', bouquet);
                     bouquetList.innerHTML += `
-                            <div class="col-md-4 mb-4">
-                                <div class="card product-card position-relative">
-                                    ${bouquet.featured ? '<span class="most-popular">Most Popular</span>' : ''}
-                                    <img src="${bouquet.imageUrl}" class="card-img-top" alt="${bouquet.name}">
-                                    <div class="card-body">
-                                        <h5 class="card-title">${bouquet.name}</h5>
-                                        <p class="card-text">${bouquet.description}</p>
-                                        <p class="card-text text-success">$${bouquet.price.toFixed(2)}</p>
-                                        <button class="btn btn-primary add-to-cart" data-id="${bouquet.id}">Add to Cart</button>
-                                    </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card product-card position-relative">
+                                ${bouquet.featured ? '<span class="most-popular">Most Popular</span>' : ''}
+                                <img src="${bouquet.imageUrl}" class="card-img-top" alt="${bouquet.name}">
+                                <div class="card-body">
+                                    <h5 class="card-title">${bouquet.name}</h5>
+                                    <p class="card-text">${bouquet.description}</p>
+                                    <p class="card-text text-success">$${bouquet.price.toFixed(2)}</p>
+                                    <button class="btn btn-primary add-to-cart" data-id="${bouquet.id}">Add to Cart</button>
                                 </div>
                             </div>
-                        `;
+                        </div>
+                    `;
                 });
             })
-            .catch(error => {
-                console.error('Error fetching bouquets:', error);
-            });
+            .catch(error => console.error('Error fetching bouquets:', error));
 
-        // Handle Add to Cart functionality when user clicks the button on a bouquet card dynamically added
-        const bouquetList = document.getElementById('bouquet-list');
-        bouquetList.addEventListener('click', function (event) {
+
+        // Add event listener for the Add to Cart buttons on the page to add items to the cart
+        document.addEventListener('click', function (event) {
+            console.log('Click event:', event);
             if (event.target && event.target.classList.contains('add-to-cart')) {
                 event.preventDefault();
-
                 const bouquetId = event.target.getAttribute('data-id');
-                fetch('http://localhost:8080/api/cart/add', {  // Change from /shop/cart/add to /api/cart/add
+                console.log('Add to cart clicked, bouquetId:', bouquetId);
+                const token = localStorage.getItem('jwt_token');
+                if (!token) {
+                    console.error('JWT token not found in localStorage');
+                    alert('You must be logged in to add items to the cart.');
+                    return;
+                }
+
+                // Add the item to the cart
+                console.log('JWT token:', token);
+
+                if (!token) {
+                    console.error('No JWT token found.');
+                    alert('You must be logged in to add items to the cart.');
+                    return; // Prevent further execution if there's no token
+                }
+
+                fetch('http://localhost:8080/shop/add-to-cart', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('jwt_token')  // JWT token, if required
+                        'Authorization': 'Bearer ' + token
                     },
-                    body: JSON.stringify({
-                        bouquetId: bouquetId,
-                        quantity: 1
-                    })
+                    body: JSON.stringify({bouquetId, quantity: 1}) // Make sure bouquetId and quantity are correct
                 })
-
                     .then(response => {
+                        console.log('Add to cart response:', response);
+
                         if (!response.ok) {
-                            return response.text().then(err => {
-                                throw new Error(err || 'Failed to add item to cart');
+                            // If the response is not ok, handle it properly
+                            return response.json().then(errData => {
+                                throw new Error(errData.message || 'Error adding item to cart');
                             });
                         }
-                        return response.json();  // Parse JSON response
+                        return response.json(); // Parse the response as JSON if it's OK
                     })
                     .then(data => {
-                        alert('Item added to cart successfully!');
-                        updateCartCount();  // Update cart count
+                        console.log('Add to cart data:', data);
+
+                        // Handle success response, showing success message
+                        const successMessage = document.getElementById('success-message');
+                        if (successMessage) {
+                            successMessage.textContent = 'Item added to cart successfully!'; // You can customize the success message here
+                            successMessage.style.display = 'block';
+                            setTimeout(() => {
+                                successMessage.style.display = 'none';
+                            }, 3000);
+                        }
+
+                        // Update the cart count after adding the item
+                        updateCartCount();
                     })
                     .catch(error => {
-                        console.error('Error:', error.message);
-                        alert('Error adding item to cart: ' + error.message);
+                        console.error('Error adding item to cart:', error.message);
+
+                        // Display error message on the page (instead of alert)
+                        const errorMessage = document.getElementById('error-message');
+                        if (errorMessage) {
+                            errorMessage.textContent = `Error: ${error.message}`;
+                            errorMessage.style.display = 'block';
+                            setTimeout(() => {
+                                errorMessage.style.display = 'none';
+                            }, 3000);
+                        }
                     });
 
 
-                // Function to update cart count dynamically
+
                 function updateCartCount() {
-                    fetch('http://localhost:8080/shop/cart/count', { // Replace with your backend endpoint
+                    console.log('Updating cart count');
+                    fetch('http://localhost:8080/shop/cart/count', {
                         method: 'GET',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + localStorage.getItem('jwt_token') // Include JWT if required
+                            'Authorization': 'Bearer ' + localStorage.getItem('jwt_token')
                         }
                     })
                         .then(response => {
-                            if (!response.ok) {
-                                throw new Error('Failed to fetch cart count');
-                            }
+                            console.log('Cart count response:', response);
                             return response.json();
                         })
                         .then(data => {
+                            console.log('Cart count data:', data);
                             const cartCountElement = document.querySelector('.cart-count');
                             if (cartCountElement) {
                                 cartCountElement.textContent = data.count;
                             }
                         })
-                        .catch(error => {
-                            console.error('Error fetching cart count:', error);
-                        });
+                        .catch(error => console.error('Error fetching cart count:', error));
                 }
-
-                updateCartCount(); // Initial update of the cart count
             }
         });
-
-        // Fetch and display user profile information
-        fetch('http://localhost:8080/api/user/profile', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`,
-                'Content-Type': 'application/json',
-            },
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch profile');
-                }
-                return response.json();
-            })
-            .then(profile => {
-                console.log('Profile:', profile);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
     });
-
 </script>
-</body>
 
+</body>
 </html>
