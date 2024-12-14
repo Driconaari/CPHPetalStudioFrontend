@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/shop.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light">
+    <div class="container">
+        <a class="navbar-brand" href="/">CPH Petal Studio</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="/shop">Shop</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/cart">Cart</a></li>
+                <li class="nav-item">
+                    <form action="/logout" method="post">
+                        <button class="nav-link btn btn-link" type="submit">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container mt-5">
+    <div class="alert alert-success">
+        <h1>Thank You for Your Purchase!</h1>
+        <p>Your order has been successfully placed.</p>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Receipt</h5>
+            <p><strong>Order ID:</strong> <span id="orderId">Loading...</span></p>
+            <p><strong>Total Amount:</strong> <span id="totalAmount">Loading...</span></p>
+            <p><strong>Payment Method:</strong> <span id="paymentMethod">Loading...</span></p>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    // Get order details from query parameters
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        document.getElementById('orderId').innerText = urlParams.get('orderId') || 'N/A';
+        document.getElementById('totalAmount').innerText = `${urlParams.get('totalAmount')}` || 'N/A';
+        document.getElementById('paymentMethod').innerText = urlParams.get('paymentMethod') || 'N/A';
+    });
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
