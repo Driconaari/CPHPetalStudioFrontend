@@ -38,8 +38,31 @@
                 <p class="card-text"><strong>Total Amount:</strong> <span id="totalAmount"></span></p>
             </div>
         </div>
+
+        <!-- Subscription Options -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Subscription Options</h5>
+                <form id="subscriptionForm">
+                    <div class="form-check">
+                        <input type="radio" id="weekly" name="subscriptionPlan" class="form-check-input" value="WEEKLY">
+                        <label for="weekly" class="form-check-label">Weekly Subscription</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="radio" id="monthly" name="subscriptionPlan" class="form-check-input" value="MONTHLY">
+                        <label for="monthly" class="form-check-label">Monthly Subscription</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="radio" id="yearly" name="subscriptionPlan" class="form-check-input" value="YEARLY">
+                        <label for="yearly" class="form-check-label">Yearly Subscription</label>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Payment Options -->
         <div class="text-end">
-            <button id="proceedButton" class="btn btn-primary">Proceed to Payment Options</button>
+            <button id="proceedButton" class="btn btn-primary">Pay Now</button>
             <button id="subscribeButton" class="btn btn-secondary">Proceed with Subscription</button>
         </div>
     </div>
@@ -101,8 +124,14 @@
         });
 
         document.getElementById('subscribeButton').addEventListener('click', () => {
-            const queryString = `?orderId=${orderIdElement.innerText}&totalAmount=${totalAmountElement.innerText}&subscriptionPlan=WEEKLY`;
-            window.location.href = `/payment-options.html${queryString}`;
+            const selectedPlan = document.querySelector('input[name="subscriptionPlan"]:checked');
+            if (selectedPlan) {
+                const subscriptionPlan = selectedPlan.value;
+                const queryString = `?orderId=${orderIdElement.innerText}&totalAmount=${totalAmountElement.innerText}&subscriptionPlan=${subscriptionPlan}`;
+                window.location.href = `/payment-options.html${queryString}`;
+            } else {
+                alert("Please select a subscription plan before proceeding.");
+            }
         });
     });
 </script>
